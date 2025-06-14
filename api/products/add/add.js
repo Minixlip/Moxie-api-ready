@@ -3,9 +3,15 @@ import Product from '../../models/ProductModel';
 
 export default async function handler(req, res) {
   // Only allow POST requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return;
   }
 
   const {
