@@ -2,33 +2,36 @@ import dbConnect from '../../lib/dbConnect';
 import Product from '../../models/ProductModel';
 
 export default async function handler(req, res) {
-  // Handle preflight OPTIONS request for CORS
+  // Handle the browser's preflight OPTIONS request for CORS
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  // Ensure we only accept GET requests
-  if (req.method !== 'GET') {
-    res.setHeader('Allow', ['GET']);
+  // We only want to accept POST requests for this endpoint
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
     return;
   }
 
-  // This is the key change: We get the name from the query parameter
-  const { name } = req.query;
+  // Get the item's name from the request body
+  const { itemName } = req.body;
 
-  if (!name) {
+  if (!itemName) {
     return res
       .status(400)
-      .json({ success: false, error: 'Product name not provided in query.' });
+      .json({
+        success: false,
+        error: 'itemName not provided in request body.',
+      });
   }
 
   try {
     await dbConnect();
 
-    // The query name is already decoded.
-    const product = await Product.findOne({ name: name });
+    // Find the product in the database by its name
+    const product = await Product.findOne({ name: itemName });
 
     if (!product) {
       return res
@@ -36,6 +39,7 @@ export default async function handler(req, res) {
         .json({ success: false, error: 'Product not found in database' });
     }
 
+    // If found, return the product data
     res.status(200).json({ success: true, data: product });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
